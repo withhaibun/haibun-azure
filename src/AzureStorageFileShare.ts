@@ -15,8 +15,8 @@ class AzureStorageFileShare extends AzureStorage {
   shareClient?: ShareClient;
   shareName = 'e2e-reviews';
 
-  constructor({ account, accountKey, defaultContainer }: TStorageEnv) {
-    super({account, accountKey, defaultContainer});
+  constructor({ account, accountKey, destination: defaultContainer }: TStorageEnv) {
+    super({account, accountKey, destination: defaultContainer});
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
