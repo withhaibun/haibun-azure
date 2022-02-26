@@ -29,19 +29,8 @@ export abstract class AzureStorage extends AStorage implements IHasOptions {
   destination?: string;
   setWorld(world: TWorld, steppers: AStepper[]) {
     super.setWorld(world, steppers);
-    this.destination = getStepperOption(this, 'DESTINATION', this.world!.options);
+    this.destination = getStepperOption(this, 'DESTINATION', world.extraOptions);
   }
 
-  static getEnv(env: { [name: string]: string | undefined }) {
-    const account = process.env.ACCOUNT_NAME;
-    const accountKey = process.env.ACCOUNT_KEY;
-    const destination = process.env.DEFAULT_CONTAINER;
-
-    if (!account || !accountKey || !destination) {
-      throw Error('missing env arg');
-    }
-
-    return { account, accountKey, destination };
-  }
   ensureCaptureDir= super.ensureCaptureDir
 }

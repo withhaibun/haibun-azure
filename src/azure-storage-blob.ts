@@ -1,4 +1,3 @@
-import { dirname } from 'path';
 
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
 import { AzureStorage } from './azure-storage';
@@ -32,8 +31,8 @@ class AzureStorageBlob extends AzureStorage {
 
   setWorld(world: TWorld, steppers: AStepper[]) {
     super.setWorld(world, steppers);
-    const account = getStepperOption(this, 'ACCOUNT', this.world!.options);
-    const accountKey = getStepperOption(this, 'KEY', this.world!.options);
+    const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
+    const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
