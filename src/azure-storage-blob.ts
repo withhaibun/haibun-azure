@@ -51,28 +51,41 @@ class AzureStorageBlob extends AzureStorage {
 
   async readdir() {
     let i = 0;
+    let files = [];
     for await (const blob of (await this.getContainerClient()).listBlobsFlat()) {
-      console.log(`Blob ${i++}: ${blob.name}`);
+      files.push(blob.name);
+    }
+    return files;
+  }
+  async rmrf(inPrefix: string) {
+    const files = await this.readdir();
+    const prefix = this.pathed(inPrefix);
+    const containerClient = this.serviceClient!.getContainerClient(this.destination!);
+    for (const file of files) {
+      this.getWorld().logger.log(`delete: ${file}`);
+      if (file.startsWith(prefix)) {
+        await containerClient.deleteBlob(file)
+      }
     }
   }
   async createContainer(containerName: string) {
     const containerClient = this.serviceClient!.getContainerClient(containerName);
     await containerClient.create();
   }
-
-  async setContainer(containerName: string) {
-    this.containerClient = undefined;
-    this.destination = containerName;
+  pathed(f: string) {
+    // FIXME: double slash
+    return f.replace(/\//g, '_').replace(/__/g, '_'); 
   }
 
   async writeFileBuffer(fileName: string, content: Buffer) {
     const blobContentType = TYPES[fileName.replace(/.*\./, '')];
-    const dest = fileName.replace(/\//g, '_');
+    const dest = this.pathed(fileName);
     const containerClient = await this.getContainerClient();
     const blockBlobClient = containerClient.getBlockBlobClient(dest);
 
-    await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
-    this.getWorld().logger.debug(`uploaded ${dest}`);
+    const res = await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
+
+    this.getWorld().logger.info(`uploaded ${dest}`);
   }
 }
 
