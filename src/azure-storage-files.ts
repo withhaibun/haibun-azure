@@ -1,8 +1,8 @@
-import { readFileSync, statSync, readdirSync } from 'fs';
+import { statSync, readdirSync } from 'fs';
 import { dirname, basename } from 'path';
 
 import { ShareServiceClient, ShareClient, StorageSharedKeyCredential, ShareDirectoryClient } from "@azure/storage-file-share";
-import { TStorageEnv, AzureStorage } from './azure-storage';
+import { AzureStorage } from './azure-storage';
 import { TWorld, AStepper } from '@haibun/core/build/lib/defs';
 import { getStepperOption } from '@haibun/core/build/lib/util';
 
