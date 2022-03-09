@@ -1,10 +1,13 @@
 import { basename, dirname } from 'path';
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
+
+import { ExternalProperties } from 'sarif';
 import { AzureStorage } from './azure-storage';
-import { AStepper, CAPTURE, OK, TNamed, TWorld } from '@haibun/core/build/lib/defs';
-import { getStepperOption } from '@haibun/core/build/lib/util';
+import { AStepper, CAPTURE, IHasOptions, OK, TNamed, TWorld } from '@haibun/core/build/lib/defs';
+import { findStepper, getStepperOption, stringOrError } from '@haibun/core/build/lib/util';
 
 import { ICreateStorageDestination } from "@haibun/domain-storage/build/domain-storage";
+import { TINDEX_SUMMARY } from "@haibun/out-review/build/generate-html";
 import { AStorage } from "@haibun/domain-storage/build/AStorage";
 import { Timer } from '@haibun/core/build/lib/Timer';
 
@@ -14,7 +17,15 @@ const TYPES: { [type: string]: string } = {
   'webm': 'video/mp4'
 }
 
-class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
+class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IHasOptions {
+  indexStorage?: AStorage;
+  options = {
+    ...AzureStorage.prototype.options,
+    INDEX_DEST: {
+      desc: 'destination for SARIF indexes',
+      parse: (input: string) => stringOrError(input)
+    }
+  }
   stat(dir: string) {
     throw new Error('Method not implemented.');
   }
@@ -30,8 +41,11 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   exists(ntt: string) {
     return false;
   }
-  readFile(path: string, coding: string) {
-    throw new Error('Method not implemented.');
+  async readFile(path: string, coding: string) {
+    const blockBlobClient = (await this.getContainerClient()).getBlockBlobClient(path);
+    const res = await blockBlobClient.download(0);
+    const text = streamToText(res.readableStreamBody)
+    return text;
   }
   serviceClient?: BlobServiceClient;
   containerClient?: ContainerClient;
@@ -40,6 +54,10 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     super.setWorld(world, steppers);
     const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
     const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
+    const indexesDest = getStepperOption(this, 'SUMMARIZE_DEST', world.extraOptions);
+    if (indexesDest) {
+      this.indexStorage = findStepper(steppers, indexesDest);
+    }
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
@@ -81,7 +99,7 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   }
   pathed(f: string) {
     console.log(this.getWorld().options);
-    
+
     const setting = this.getWorld().options.SETTING || 'dev';
     const fn = basename(f);
     // FIXME: double slash
@@ -103,19 +121,38 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   }
   steps = {
     ...AStorage.prototype.steps,
-    coldPolicy: {
-      gwta: `files in {where} go to cold storage in {x} months`,
-      action: async ({ x, what }: TNamed) => {
+    indexSarif: {
+      gwta: `index the sarif file at {where}`,
+      action: async ({ where }: TNamed) => {
+        await this.indexSarif(where);
         return OK;
       }
     },
-    deletePolicy: {
-      gwta: `files in {where} go to cold storage in {x} months`,
-      action: async ({ x, what }: TNamed) => {
-        return OK;
+  }
+  async indexSarif(loc: string) {
+    const contents = await this.readFile(loc, 'utf-8');
+    const sarif: ExternalProperties = JSON.parse(contents);
+    let results = [];
+    for (const result of sarif.results!) {
+      const res: TINDEX_SUMMARY = {
+        ok: result.level !== 'error',
+        title: result.message.text || 'no message',
+        path: loc
       }
+      results.push(res);
     }
+    await this.indexStorage!.writeFile('sarif-index.json', JSON.stringify({ results }));
   }
 }
 
 export default AzureStorageBlob;
+
+// FIXME
+async function streamToText(readable: any) {
+  readable.setEncoding('utf8');
+  let data = '';
+  for await (const chunk of readable) {
+    data += chunk;
+  }
+  return data;
+}

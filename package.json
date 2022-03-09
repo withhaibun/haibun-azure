@@ -17,6 +17,9 @@
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "@azure/storage-file-share": "^12.8.0",
-    "@haibun/core": "^1.2.4"
+    "@haibun/core": "^1.5.0",
+    "@haibun/domain-storage": "^1.6.0",
+    "@haibun/out-review": "^1.6.0",
+    "@types/sarif": "^2.1.4"
   }
 }
