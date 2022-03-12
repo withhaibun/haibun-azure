@@ -1,8 +1,7 @@
 {
   "name": "@haibun/azure",
   "version": "1.6.0",
-  "description": "",
-  "main": "build/web-http.js",
+  "description": "azure steps for haibun",
   "files": [
     "build/"
   ],
@@ -19,7 +18,6 @@
     "@azure/storage-file-share": "^12.8.0",
     "@haibun/core": "^1.5.0",
     "@haibun/domain-storage": "^1.6.0",
-    "@haibun/out-review": "^1.6.0",
     "@types/sarif": "^2.1.4"
   }
 }

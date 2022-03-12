@@ -1,14 +1,11 @@
 import { basename, dirname } from 'path';
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
 
-import { ExternalProperties } from 'sarif';
 import { AzureStorage } from './azure-storage';
-import { AStepper, CAPTURE, IHasOptions, OK, TNamed, TWorld } from '@haibun/core/build/lib/defs';
-import { findStepper, getStepperOption, stringOrError } from '@haibun/core/build/lib/util';
+import { AStepper, CAPTURE, IHasOptions, TWorld } from '@haibun/core/build/lib/defs';
+import { getStepperOption, stringOrError } from '@haibun/core/build/lib/util';
 
 import { ICreateStorageDestination } from "@haibun/domain-storage/build/domain-storage";
-import { TINDEX_SUMMARY } from "@haibun/out-review/build/generate-html";
-import { AStorage } from "@haibun/domain-storage/build/AStorage";
 import { Timer } from '@haibun/core/build/lib/Timer';
 
 const TYPES: { [type: string]: string } = {
@@ -17,15 +14,7 @@ const TYPES: { [type: string]: string } = {
   'webm': 'video/mp4'
 }
 
-class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IHasOptions {
-  indexStorage?: AStorage;
-  options = {
-    ...AzureStorage.prototype.options,
-    INDEX_DEST: {
-      desc: 'destination for SARIF indexes',
-      parse: (input: string) => stringOrError(input)
-    }
-  }
+class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
   stat(dir: string) {
     throw new Error('Method not implemented.');
   }
@@ -55,9 +44,6 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
     const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
     const indexesDest = getStepperOption(this, 'SUMMARIZE_DEST', world.extraOptions);
-    if (indexesDest) {
-      this.indexStorage = findStepper(steppers, indexesDest);
-    }
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
@@ -118,30 +104,6 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     const res = await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
 
     this.getWorld().logger.info(`uploaded ${dest}`);
-  }
-  steps = {
-    ...AStorage.prototype.steps,
-    indexSarif: {
-      gwta: `index the sarif file at {where}`,
-      action: async ({ where }: TNamed) => {
-        await this.indexSarif(where);
-        return OK;
-      }
-    },
-  }
-  async indexSarif(loc: string) {
-    const contents = await this.readFile(loc, 'utf-8');
-    const sarif: ExternalProperties = JSON.parse(contents);
-    let results = [];
-    for (const result of sarif.results!) {
-      const res: TINDEX_SUMMARY = {
-        ok: result.level !== 'error',
-        title: result.message.text || 'no message',
-        path: loc
-      }
-      results.push(res);
-    }
-    await this.indexStorage!.writeFile('sarif-index.json', JSON.stringify({ results }));
   }
 }
 
