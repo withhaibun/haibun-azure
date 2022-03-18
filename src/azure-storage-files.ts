@@ -56,7 +56,6 @@ class AzureStorageFileShare extends AzureStorage {
   }
 
   async mkdir(directoryName: string) {
-    console.log('mkdir', directoryName);
     const directoryClient = await this.getDirectoryClient(directoryName);
     await directoryClient.create();
     return directoryClient;
@@ -79,9 +78,9 @@ class AzureStorageFileShare extends AzureStorage {
   async printdir(dc: ShareDirectoryClient) {
     for await (const entity of dc.listFilesAndDirectories()) {
       if (entity.kind === "directory") {
-        console.log(` directory\t: ${entity.name}`);
+        this.getWorld().logger.log(` directory\t: ${entity.name}`);
       } else {
-        console.log(` file\t: ${entity.name}`);
+        this.getWorld().logger.log(` file\t: ${entity.name}`);
       }
     }
   }
@@ -89,7 +88,6 @@ class AzureStorageFileShare extends AzureStorage {
   async unlink(source: string) {
     const directoryName = dirname(source);
     const fileName = basename(source);
-    console.log(directoryName, ',', fileName);
     const dc = (await this.getDirectoryClient(directoryName));
     await dc.deleteFile(fileName);
   }
@@ -100,7 +98,6 @@ class AzureStorageFileShare extends AzureStorage {
     for (const entry of entries) {
       const here = `${source}/${entry}`;
       const stat = statSync(here);
-      console.log('delete', here, stat.isDirectory() ? 'D' : 'F');
       if (stat.isDirectory()) {
         await this.recurseDeleteRemoteDirectory(here);
         await this.rmdir(here).catch(e => console.log(`rmdir ${here} failed: ${e.message}`));
@@ -113,7 +110,6 @@ class AzureStorageFileShare extends AzureStorage {
 
   async writeFile(fileName: string, content: Buffer) {
     const directoryName = dirname(fileName)
-    console.log('writeFile', directoryName, fileName);
 
     const directoryClient = await this.getDirectoryClient(directoryName);
     await this.printdir(directoryClient);
@@ -122,6 +118,5 @@ class AzureStorageFileShare extends AzureStorage {
     const fileClient = directoryClient.getFileClient(fileName);
     await fileClient.create(contentByteLength);
     await fileClient.uploadRange(content, 0, contentByteLength);
-    console.log(`Create file ${fileName} successfully`);
   }
 }

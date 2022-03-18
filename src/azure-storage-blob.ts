@@ -2,17 +2,11 @@ import { basename, dirname } from 'path';
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
 
 import { AzureStorage } from './azure-storage';
-import { AStepper, CAPTURE, IHasOptions, TWorld } from '@haibun/core/build/lib/defs';
-import { getStepperOption, stringOrError } from '@haibun/core/build/lib/util';
+import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs';
+import { getStepperOption } from '@haibun/core/build/lib/util';
 
-import { ICreateStorageDestination } from "@haibun/domain-storage/build/domain-storage";
+import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage";
 import { Timer } from '@haibun/core/build/lib/Timer';
-
-const TYPES: { [type: string]: string } = {
-  html: 'text/html',
-  json: 'json',
-  'webm': 'video/mp4'
-}
 
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
   stat(dir: string) {
@@ -43,7 +37,6 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     super.setWorld(world, steppers);
     const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
     const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
-    const indexesDest = getStepperOption(this, 'SUMMARIZE_DEST', world.extraOptions);
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
@@ -68,14 +61,15 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     }
     return files;
   }
-  async rmrf(inPrefix: string) {
+  async rmrf(start: string) {
     const files = await this.readdir();
-    const prefix = this.pathed(inPrefix);
     const containerClient = this.serviceClient!.getContainerClient(this.destination!);
+    const prefix = `${this.getWorld().options.SETTING}-${start}`;
+
     for (const file of files) {
-      this.getWorld().logger.log(`delete: ${file}`);
       if (file.startsWith(prefix)) {
-        await containerClient.deleteBlob(file)
+        const res = await containerClient.deleteBlob(file)
+        this.getWorld().logger.log(`delete ${prefix}: ${file} ${res._response.status}`);
       }
     }
   }
@@ -83,23 +77,25 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     const containerClient = this.serviceClient!.getContainerClient(containerName);
     await containerClient.create({});
   }
-  pathed(f: string) {
-    console.log(this.getWorld().options);
 
-    const setting = this.getWorld().options.SETTING || 'dev';
+  pathed(mediaType: TMediaType, f: string) {
     const fn = basename(f);
+    console.log('FN', fn, f);
+
+    const setting = this.getWorld().options.SETTING;
+
     // FIXME: double slash
-    const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/^\//, '').replace(/\//g, '_').replace(/__/g, '_');
+    const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');
     const datestring = Timer.startTime.toISOString().replace(/[T:-]/g, '').replace(/\..+/, '')
-    const type = (TYPES[fn.replace(/.*\./, '')] || 'unknown').replace('/', '_');
-    return [setting, type, datestring, path, fn].filter(p => p?.length > 0).join('-');
+    return [setting, mediaType, datestring, path, fn].filter(p => p?.length > 0).join('-');
   }
 
-  async writeFileBuffer(fileName: string, content: Buffer) {
-    const blobContentType = TYPES[fileName.replace(/.*\./, '')];
-    const dest = this.pathed(fileName);
+  async writeFileBuffer(fileName: string, content: Buffer, mediaType: EMediaTypes) {
+    const blobContentType: TMediaType = guessMediaType(fileName);
+    const dest = this.pathed(mediaType, fileName);
     const containerClient = await this.getContainerClient();
     const blockBlobClient = containerClient.getBlockBlobClient(dest);
+    console.log('!!', fileName, dest);
 
     const res = await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
 
