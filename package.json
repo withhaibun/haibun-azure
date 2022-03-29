@@ -1,6 +1,6 @@
 {
   "name": "@haibun/azure",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "azure steps for haibun",
   "main": "build/azure-storage-blob.js",
   "files": [
