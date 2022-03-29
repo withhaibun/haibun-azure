@@ -8,6 +8,7 @@ import { getStepperOption } from '@haibun/core/build/lib/util';
 import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage";
 import { Timer } from '@haibun/core/build/lib/Timer';
 
+const NO_SETTING = 'NO_SETTING';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
   stat(dir: string) {
     throw new Error('Method not implemented.');
@@ -64,7 +65,8 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   async rmrf(start: string) {
     const files = await this.readdir();
     const containerClient = this.serviceClient!.getContainerClient(this.destination!);
-    const prefix = `${this.getWorld().options.SETTING}-${start}`;
+    const { SETTING } = this.getWorld().options;
+    const prefix = SETTING ? `${SETTING}-${start}` : 'start';
 
     for (const file of files) {
       if (file.startsWith(prefix)) {
@@ -80,9 +82,7 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
 
   pathed(mediaType: TMediaType, f: string) {
     const fn = basename(f);
-    console.log('FN', fn, f);
-
-    const setting = this.getWorld().options.SETTING;
+    const setting = this.getWorld().options.SETTING || NO_SETTING;
 
     // FIXME: double slash
     const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');
@@ -95,7 +95,6 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     const dest = this.pathed(mediaType, fileName);
     const containerClient = await this.getContainerClient();
     const blockBlobClient = containerClient.getBlockBlobClient(dest);
-    console.log('!!', fileName, dest);
 
     const res = await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
 

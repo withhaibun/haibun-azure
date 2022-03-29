@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "prepublishOnly": "tsc -b .",
-    "test": "jest --config jest.config.ts",
-    "test-watch": "jest --config jest.config.ts --watch"
+    "test": "jest --config jest.config.js",
+    "test-watch": "jest --config jest.config.js --watch"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +18,12 @@
     "@azure/storage-blob": "^12.8.0",
     "@azure/storage-file-share": "^12.8.0",
     "@haibun/core": "^1.5.0",
-    "@haibun/domain-storage": "^1.6.0",
-    "@types/sarif": "^2.1.4"
+    "@haibun/domain-storage": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "@types/sarif": "^2.1.4",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4"
   }
 }
