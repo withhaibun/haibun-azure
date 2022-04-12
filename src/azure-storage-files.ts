@@ -5,8 +5,12 @@ import { ShareServiceClient, ShareClient, StorageSharedKeyCredential, ShareDirec
 import { AzureStorage } from './azure-storage';
 import { TWorld, AStepper } from '@haibun/core/build/lib/defs';
 import { getStepperOption } from '@haibun/core/build/lib/util';
+import { IFile } from '@haibun/domain-storage/build/AStorage';
 
 class AzureStorageFileShare extends AzureStorage {
+  readdirStat(dir: string): Promise<IFile[]> {
+    throw new Error('Method not implemented.');
+  }
   writeFileBuffer(file: string, contents: Buffer): void {
     throw new Error('Method not implemented.');
   }

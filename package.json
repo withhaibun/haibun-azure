@@ -7,9 +7,19 @@
     "build/"
   ],
   "scripts": {
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "eslint -c .eslintrc.json --ext .ts,.js src",
+    "test": "jest --config jest.config.ts",
+    "test-haibun": "build/cli.js test/projects/web",
+    "coverage": "jest --config jest.config.ts --coverage",
+    "test-watch": "jest --watch",
+    "build": "tsc -b .",
+    "tsc-watch": "tsc --watch",
+    "tsc": "tsc",
+    "prepare": "npm run build",
     "prepublishOnly": "tsc -b .",
-    "test": "jest --config jest.config.js",
-    "test-watch": "jest --config jest.config.js --watch"
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src"
   },
   "keywords": [],
   "author": "",

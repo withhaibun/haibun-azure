@@ -7,12 +7,10 @@ import { getStepperOption } from '@haibun/core/build/lib/util';
 
 import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage";
 import { Timer } from '@haibun/core/build/lib/Timer';
+import { IFile } from '@haibun/domain-storage/build/AStorage';
 
 const NO_SETTING = 'NO_SETTING';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
-  stat(dir: string) {
-    throw new Error('Method not implemented.');
-  }
   // directories are not required
   mkdir(dir: string) {
     return true;
@@ -54,16 +52,26 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     return this.containerClient;
   }
 
-  async readdir() {
+  async readdir(dir: string): Promise<string[]> {
+    const ifiles = await this.readdirStat(dir);
+    return ifiles.map(f => f.name);
+  }
+  async readdirStat(dir: string): Promise<IFile[]> {
     let i = 0;
-    let files = [];
+    let files: IFile[] = [];
     for await (const blob of (await this.getContainerClient()).listBlobsFlat()) {
-      files.push(blob.name);
+      const ifile = {
+        name: blob.name,
+        created: blob.properties.createdOn?.getDate()!,
+        isDirectory: false,
+        isFile: true
+      }
+      files.push(ifile);
     }
     return files;
   }
   async rmrf(start: string) {
-    const files = await this.readdir();
+    const files = await this.readdir(start);
     const containerClient = this.serviceClient!.getContainerClient(this.destination!);
     const { SETTING } = this.getWorld().options;
     const prefix = SETTING ? `${SETTING}-${start}` : 'start';

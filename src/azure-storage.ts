@@ -32,5 +32,5 @@ export abstract class AzureStorage extends AStorage implements IHasOptions {
     this.destination = getStepperOption(this, 'DESTINATION', world.extraOptions);
   }
 
-  ensureCaptureDir = super.ensureCaptureDir
+  ensureCaptureDir = super.ensureCaptureLocation
 }
