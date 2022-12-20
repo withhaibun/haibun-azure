@@ -1,6 +1,6 @@
 {
   "name": "@haibun/azure",
-  "version": "1.13.5",
+  "version": "1.13.6",
   "description": "azure steps for haibun",
   "main": "build/azure-storage-blob.js",
   "files": [
@@ -27,8 +27,8 @@
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "@azure/storage-file-share": "^12.8.0",
-    "@haibun/core": "1.13.5",
-    "@haibun/domain-storage": "1.13.5"
+    "@haibun/core": "1.13.6",
+    "@haibun/domain-storage": "1.13.6"
   },
   "devDependencies": {
     "@types/jest": "^29.2.4",
