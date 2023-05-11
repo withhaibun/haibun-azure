@@ -2,10 +2,10 @@ import { statSync, readdirSync } from 'fs';
 import { dirname, basename } from 'path';
 
 import { ShareServiceClient, ShareClient, StorageSharedKeyCredential, ShareDirectoryClient } from "@azure/storage-file-share";
-import { AzureStorage } from './azure-storage';
-import { TWorld, AStepper } from '@haibun/core/build/lib/defs';
+import { AzureStorage } from './azure-storage.js';
+import { TWorld, AStepper } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util';
-import { IFile } from '@haibun/domain-storage/build/AStorage';
+import { IFile } from '@haibun/domain-storage/build/AStorage.js';
 
 class AzureStorageFileShare extends AzureStorage {
   readdirStat(dir: string): Promise<IFile[]> {

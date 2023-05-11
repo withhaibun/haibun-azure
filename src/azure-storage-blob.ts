@@ -1,15 +1,15 @@
 import { basename, dirname } from 'path';
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
 
-import { AzureStorage } from './azure-storage';
-import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs';
-import { getStepperOption } from '@haibun/core/build/lib/util';
+import { AzureStorage } from './azure-storage.js';
+import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
+import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
 
-import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage";
-import { Timer } from '@haibun/core/build/lib/Timer';
-import { IFile } from '@haibun/domain-storage/build/AStorage';
+import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage.js";
+import { Timer } from '@haibun/core/build/lib/Timer.js';
+import { IFile } from '@haibun/domain-storage/build/AStorage.js';
 
-const NO_SETTING = 'NO_SETTING';
+export const DEFAULT_SETTING = 'DEFAULT_SETTING';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
   // directories are not required
   mkdir(dir: string) {
@@ -70,10 +70,17 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     }
     return files;
   }
+  private _getSetting() {
+    const setting = this.getWorld().options.SETTING || DEFAULT_SETTING;
+    return setting;
+
+  }
   async rmrf(start: string) {
     const files = await this.readdir(start);
+    this.getWorld().logger.log(`rm ${files.length} files`);
+    
     const containerClient = this.serviceClient!.getContainerClient(this.destination!);
-    const { SETTING } = this.getWorld().options;
+    const  SETTING  = this._getSetting();
     const prefix = SETTING ? `${SETTING}-${start}` : 'start';
 
     for (const file of files) {
@@ -90,7 +97,7 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
 
   pathed(mediaType: TMediaType, f: string) {
     const fn = basename(f);
-    const setting = this.getWorld().options.SETTING || NO_SETTING;
+    const setting = this._getSetting();
 
     // FIXME: double slash
     const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');

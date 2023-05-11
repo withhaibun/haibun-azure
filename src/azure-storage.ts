@@ -1,6 +1,6 @@
-import { AStepper, IHasOptions, TWorld } from "@haibun/core/build/lib/defs";
-import { getStepperOption, stringOrError } from "@haibun/core/build/lib/util";
-import { AStorage } from "@haibun/domain-storage/build/AStorage";
+import { AStepper, IHasOptions, TWorld } from "@haibun/core/build/lib/defs.js";
+import { getStepperOption, stringOrError } from "@haibun/core/build/lib/util/index.js";
+import { AStorage } from "@haibun/domain-storage/build/AStorage.js";
 
 export type TStorageEnv = {
   account: string,
