@@ -1,5 +1,5 @@
 
-This extension provides a [Haibun](https://github.com/withhaibun/) extension that implements the storage interface for Azure. It can address files and blobs.
+This is a [Haibun](https://github.com/withhaibun/) module that implements the storage interface for Azure. It can address files and blobs.
 
 ## Example pipeline
 
@@ -60,7 +60,7 @@ _O_AZURESTORAGEBLOB_KEY: The key for the container.
 
 _O_OUTREVIEWS_URI_ARGS: Append this value to any review links that require an [SAS key](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview). (This is a querystring in the format ?sp=…)
 
-The pipeline uses this scripts from package.json:
+The pipeline uses this script from package.json:
 
 ```javascript
     "test-pr-happy":       "HAIBUN_OUTPUT_DEST=junit/pr-happy.xml haibun-cli $PR_HAPPY",
