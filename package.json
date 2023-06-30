@@ -1,7 +1,7 @@
 {
   "name": "@haibun/azure",
   "type": "module",
-  "version": "1.28.5",
+  "version": "1.28.10",
   "description": "azure steps for haibun",
   "main": "build/azure-storage-blob.js",
   "files": [
@@ -15,6 +15,7 @@
     "coverage": "jest --config jest.config.ts --coverage",
     "test-watch": "jest --watch",
     "build": "tsc -b .",
+    "build-watch": "tsc -b . --watch",
     "tsc-watch": "tsc --watch",
     "tsc": "tsc",
     "prepare": "npm run build",
@@ -28,8 +29,8 @@
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "@azure/storage-file-share": "^12.8.0",
-    "@haibun/core": "1.28.5",
-    "@haibun/domain-storage": "1.28.5"
+    "@haibun/core": "1.28.10",
+    "@haibun/domain-storage": "1.28.10"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",
