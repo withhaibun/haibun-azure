@@ -5,7 +5,7 @@ import { ShareServiceClient, ShareClient, StorageSharedKeyCredential, ShareDirec
 import { AzureStorage } from './azure-storage.js';
 import { TWorld, AStepper } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util';
-import { IFile } from '@haibun/domain-storage/build/AStorage.js';
+import { IFile } from '@haibun/domain-storage/build/domain-storage.js';
 
 class AzureStorageFileShare extends AzureStorage {
   readdirStat(dir: string): Promise<IFile[]> {
@@ -89,6 +89,17 @@ class AzureStorageFileShare extends AzureStorage {
     }
   }
 
+  async lstatToIFile(file: string) {
+    const a = await this.serviceClient?.getShareClient(this.shareName).getDirectoryClient(dirname(file));
+    const props = await a!.getFileClient(file).getProperties();
+    const ifile = {
+      name: file,
+      created: props.lastModified!.getDate(),
+      isDirectory: props.fileAttributes === 'Directory',
+      isFile: props.fileAttributes !== 'Directory'
+    }
+    return <IFile>ifile;
+  }
   async unlink(source: string) {
     const directoryName = dirname(source);
     const fileName = basename(source);

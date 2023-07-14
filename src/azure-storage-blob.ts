@@ -1,16 +1,16 @@
 import { basename, dirname } from 'path';
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
 
-import { AzureStorage } from './azure-storage.js';
+import { AzureStorage, STRICT_PATH } from './azure-storage.js';
 import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
 
-import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes } from "@haibun/domain-storage/build/domain-storage.js";
+import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile } from "@haibun/domain-storage/build/domain-storage.js";
 import { Timer } from '@haibun/core/build/lib/Timer.js';
-import { IFile } from '@haibun/domain-storage/build/AStorage.js';
 
-export const DEFAULT_SETTING = 'DEFAULT_SETTING';
+export const DEFAULT_SETTING = '';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
+  strictPath: boolean = false;;
   // directories are not required
   mkdir(dir: string) {
     return true;
@@ -36,6 +36,7 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     super.setWorld(world, steppers);
     const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
     const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
+    this.strictPath = !!getStepperOption(this, STRICT_PATH, world.extraOptions);
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
@@ -70,24 +71,31 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     }
     return files;
   }
-  private _getSetting() {
-    const setting = this.getWorld().options.SETTING || DEFAULT_SETTING;
-    return setting;
-
+  async lstatToIFile(file: string) {
+    const props = await (await this.getContainerClient()).getBlobClient(file).getProperties();
+    const ifile = {
+      name: file,
+      created: props.createdOn?.getDate()!,
+      isDirectory: false,
+      isFile: true
+    }
+    return <IFile>ifile;
   }
+  private _getOption(option: string, def?: string) {
+    return this.getWorld().options[option] || def;
+  }
+
   async rmrf(start: string) {
-    const files = await this.readdir(start);
-    this.getWorld().logger.log(`rm ${files.length} files`);
-    
+    const SETTING = this._getOption('SETTING', DEFAULT_SETTING);
+    const prefix = SETTING ? `${SETTING}-${start}` : start;
+    const files = (await this.readdir(start)).filter(f => this.strictPath ? true : f.startsWith(prefix));
+    this.getWorld().logger.log(`rm ${files.length} files${prefix && ` matching ${prefix}`}`);
+
     const containerClient = this.serviceClient!.getContainerClient(this.destination!);
-    const  SETTING  = this._getSetting();
-    const prefix = SETTING ? `${SETTING}-${start}` : 'start';
 
     for (const file of files) {
-      if (file.startsWith(prefix)) {
-        const res = await containerClient.deleteBlob(file)
-        this.getWorld().logger.log(`delete ${prefix}: ${file} ${res._response.status}`);
-      }
+      const res = await containerClient.deleteBlob(file)
+      this.getWorld().logger.log(`delete ${prefix}: ${file} ${res._response.status}`);
     }
   }
   async createStorageDestination(containerName: string) {
@@ -96,13 +104,17 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   }
 
   pathed(mediaType: TMediaType, f: string) {
+    if (this.strictPath) {
+      return f;
+    }
     const fn = basename(f);
-    const setting = this._getSetting();
+    const setting = this._getOption('SETTING', DEFAULT_SETTING);
 
     // FIXME: double slash
     const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');
     const datestring = Timer.startTime.toISOString().replace(/[T:-]/g, '').replace(/\..+/, '')
-    return [setting, mediaType, datestring, path, fn].filter(p => p?.length > 0).join('-');
+    const fsfn = [setting, mediaType, datestring, path, fn].filter(p => p?.length > 0).join('-');
+    return fsfn;
   }
 
   async writeFileBuffer(fileName: string, content: Buffer, mediaType: EMediaTypes) {

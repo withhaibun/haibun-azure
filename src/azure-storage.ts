@@ -1,6 +1,8 @@
 import { AStepper, IHasOptions, TWorld } from "@haibun/core/build/lib/defs.js";
-import { getStepperOption, stringOrError } from "@haibun/core/build/lib/util/index.js";
+import { boolOrError, getStepperOption, stringOrError } from "@haibun/core/build/lib/util/index.js";
 import { AStorage } from "@haibun/domain-storage/build/AStorage.js";
+
+export const STRICT_PATH = 'STRICT_PATH';
 
 export type TStorageEnv = {
   account: string,
@@ -25,6 +27,10 @@ export abstract class AzureStorage extends AStorage implements IHasOptions {
       desc: 'Azure account key',
       parse: (input: string) => stringOrError(input)
     },
+    [STRICT_PATH]: {
+      desc: 'Don\'t change paths',
+      parse: (input: string) => boolOrError(input)
+    }
   };
   destination?: string;
   setWorld(world: TWorld, steppers: AStepper[]) {
