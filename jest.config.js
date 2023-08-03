@@ -3,10 +3,13 @@ const config = {
     '<rootDir>/build'
   ],
   testMatch: [
-    '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/?(*.)+(spec|test).+(ts|tsx|js)'
+    '**/__tests__/**/*.+(ts|js)',
+    '**/?(*.)+(spec|test).+(ts|js)'
   ],
-  transform: {},
-}
+  transform: {
+    '^.+\\.(ts)$': 'ts-jest'
+  },
+  moduleFileExtensions: ['ts', 'js'],
+};
 
 export default config;
