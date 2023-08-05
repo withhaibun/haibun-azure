@@ -5,12 +5,16 @@ import { AzureStorage, STRICT_PATH } from './azure-storage.js';
 import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
 
-import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile } from "@haibun/domain-storage/build/domain-storage.js";
+import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile, IHasWebReviewIndexer, IWebReviewIndexer } from "@haibun/domain-storage/build/domain-storage.js";
 import { Timer } from '@haibun/core/build/lib/Timer.js';
+import { getLatestPublished, resolvePublishedReview } from './indexer.js';
 
 export const DEFAULT_SETTING = '';
-class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination {
-  strictPath: boolean = false;;
+class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IHasWebReviewIndexer {
+  strictPath: boolean = false;
+  account?: string;
+  accountKey?: string;
+  webReviewIndexer = { getLatestPublished, resolvePublishedReview, webContext: {} };
   // directories are not required
   mkdir(dir: string) {
     return true;
@@ -34,14 +38,19 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
 
   setWorld(world: TWorld, steppers: AStepper[]) {
     super.setWorld(world, steppers);
-    const account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
-    const accountKey = getStepperOption(this, 'KEY', world.extraOptions);
+    this.account = getStepperOption(this, 'ACCOUNT', world.extraOptions);
+    this.accountKey = getStepperOption(this, 'KEY', world.extraOptions);
     this.strictPath = !!getStepperOption(this, STRICT_PATH, world.extraOptions);
 
-    const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
+    this.webReviewIndexer.webContext = {
+      account: this.account,
+      destination: this.destination
+    };
+
+    const sharedKeyCredential = new StorageSharedKeyCredential(this.account, this.accountKey);
 
     this.serviceClient = new BlobServiceClient(
-      `https://${account}.blob.core.windows.net`,
+      `https://${this.account}.blob.core.windows.net`,
       sharedKeyCredential
     );
   }
@@ -113,8 +122,18 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     // FIXME: double slash
     const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');
     const datestring = Timer.startTime.toISOString().replace(/[T:-]/g, '').replace(/\..+/, '')
-    const fsfn = [setting, mediaType, datestring, path, fn].filter(p => p?.length > 0).join('-');
-    return fsfn;
+    const fsfn = [setting, mediaType.replace(/[^a-zA-Z0-9]/g, '_'), datestring, path, fn].filter(p => p?.length > 0).join('-');
+    return `/${fsfn}`;
+  }
+
+  async webIndexer(prefix: string) {
+    const uri = `/${this.account}?restype=container&comp=list&prefix=${prefix}`;
+    const xml = await (await fetch(uri)).text().catch(e => {
+      console.error(this.constructor.name, 'indexer failed', e);
+      throw (e);
+    });
+    const res = [...xml.matchAll(/<Name>(.*?)<\/Name>/g)].map(match => match[1]);
+    return <string[]>res;
   }
 
   async writeFileBuffer(fileName: string, content: Buffer, mediaType: EMediaTypes) {
