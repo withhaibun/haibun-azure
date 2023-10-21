@@ -36,8 +36,8 @@ class AzureStorageFileShare extends AzureStorage {
   shareClient?: ShareClient;
   shareName = 'e2e-reviews';
 
-  setWorld(world: TWorld, steppers: AStepper[]) {
-    super.setWorld(world, steppers);
+  async setWorld(world: TWorld, steppers: AStepper[]) {
+    await super.setWorld(world, steppers);
     const account = getStepperOption(this, 'ACCOUNT', this.world!.options);
     const accountKey = getStepperOption(this, 'KEY', this.world!.options);
 
