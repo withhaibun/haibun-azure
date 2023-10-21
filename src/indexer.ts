@@ -3,7 +3,7 @@ import { TReviewLink } from "@haibun/domain-storage/build/domain-storage.js";
 // this will be provided at runtime
 const webContext = { webContext: 'tbd', account: 'tbd', destination: 'tbd' };
 
-export async function getLatestPublished() {
+export async function getLatestPublished(defaultApiUrl: string) {
   const apiUrl = `https://${webContext.account}.blob.core.windows.net/${webContext.destination}?restype=container&comp=list&prefix=/dashboard/reviews`;
   const response = await fetch(apiUrl);
   const data = await response.text();

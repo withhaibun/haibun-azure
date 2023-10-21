@@ -32,9 +32,9 @@ export abstract class AzureStorage extends AStorage implements IHasOptions {
       parse: (input: string) => boolOrError(input)
     }
   };
-  destination?: string;
-  setWorld(world: TWorld, steppers: AStepper[]) {
-    super.setWorld(world, steppers);
+  destination = '<pending>';
+  async setWorld(world: TWorld, steppers: AStepper[]) {
+    await super.setWorld(world, steppers);
     this.destination = getStepperOption(this, 'DESTINATION', world.extraOptions);
   }
 

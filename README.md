@@ -58,13 +58,11 @@ _O_AZURESTORAGEBLOB_DESTINATION: A container to use as stoarge.
 
 _O_AZURESTORAGEBLOB_KEY: The key for the container.
 
-_O_OUTREVIEWS_URI_ARGS: Append this value to any review links that require an [SAS key](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview). (This is a querystring in the format ?sp=…)
-
 The pipeline uses this script from package.json:
 
 ```javascript
     "test-pr-happy":       "HAIBUN_OUTPUT_DEST=junit/pr-happy.xml haibun-cli $PR_HAPPY",
-    "publish-azure-captures-indexes": "HAIBUN_O_OUTREVIEWS_TRACE_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_PUBLISH_STORAGE=AzureStorageBlob HAIBUN_O_OUTREVIEWS_INDEX_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_REVIEWS_STORAGE=AzureStorageBlob HAIBUN_O_AZURESTORAGEBLOB_DESTINATION=${_O_AZURESTORAGEBLOB_DESTINATION} HAIBUN_O_AZURESTORAGEBLOB_ACCOUNT=${_O_AZURESTORAGEBLOB_ACCOUNT} HAIBUN_O_AZURESTORAGEBLOB_KEY=${_O_AZURESTORAGEBLOB_KEY} HAIBUN_O_OUTREVIEWS_URI_ARGS=${_O_OUTREVIEWS_URI_ARGS} haibun-cli --config publish/azure publish",
+    "publish-azure-captures-indexes": "HAIBUN_O_OUTREVIEWS_TRACE_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_PUBLISH_STORAGE=AzureStorageBlob HAIBUN_O_OUTREVIEWS_INDEX_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_REVIEWS_STORAGE=AzureStorageBlob HAIBUN_O_AZURESTORAGEBLOB_DESTINATION=${_O_AZURESTORAGEBLOB_DESTINATION} HAIBUN_O_AZURESTORAGEBLOB_ACCOUNT=${_O_AZURESTORAGEBLOB_ACCOUNT} HAIBUN_O_AZURESTORAGEBLOB_KEY=${_O_AZURESTORAGEBLOB_KEY} haibun-cli --config publish/azure publish",
   ```
 
   This will run the end to end test, then generate an interactive review, which can be found in the file or container storage objects.
