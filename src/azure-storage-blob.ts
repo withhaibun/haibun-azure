@@ -6,15 +6,19 @@ import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
 
 
-import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile, IGetPublishedReviews } from "@haibun/domain-storage/build/domain-storage.js";
+import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile, IGetPublishedReviews, TPathedOrString, actualPath, isPathed } from "@haibun/domain-storage/build/domain-storage.js";
 import { Timer } from '@haibun/core/build/lib/Timer.js';
+
+let resolvedEndpoint = '';
 
 export const DEFAULT_SETTING = '';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IGetPublishedReviews {
 
+  // return a resolved version of getPublishedReviews with static endpoint
+  public endpoint = (path: string) => `https://${this.account}.blob.core.windows.net/${path}/`;
+
   public async getPublishedReviews() {
-    const endpoint = `https://${this.account}.blob.core.windows.net/${this.destination}?restype=container&comp=list`
-    const xml = await (await fetch(endpoint)).text().catch(e => {
+    const xml = await (await fetch(`${resolvedEndpoint}?restype=container&comp=list`)).text().catch(e => {
       console.error(this.constructor.name, 'indexer failed', e);
       throw (e);
     });
@@ -128,18 +132,18 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     const path = dirname(f).replace(`./${CAPTURE}/`, '').replace(/\//g, '_').replace(/__/g, '_');
     const datestring = Timer.startTime.toISOString().replace(/[T:-]/g, '').replace(/\..+/, '')
     const fsfn = [setting, mediaType.replace(/[^a-zA-Z0-9]/g, '_'), datestring, path, fn].filter(p => p?.length > 0).join('-');
-    return `/${fsfn}`;
+    return fsfn;
   }
 
-  async writeFileBuffer(fileName: string, content: Buffer, mediaType: EMediaTypes) {
-    const blobContentType: TMediaType = guessMediaType(fileName);
-    const dest = this.pathed(mediaType, fileName);
+  async writeFileBuffer(file: TPathedOrString, content: Buffer) {
+    const blobContentType = guessMediaType(actualPath(file));
+    const path = isPathed(file) ? actualPath(file) : this.pathed(blobContentType, file);
     const containerClient = await this.getContainerClient();
-    const blockBlobClient = containerClient.getBlockBlobClient(dest);
+    const blockBlobClient = containerClient.getBlockBlobClient(path);
 
-    const res = await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
+    await blockBlobClient.upload(content, Buffer.byteLength(content), { blobHTTPHeaders: { blobContentType } });
 
-    this.getWorld().logger.info(`uploaded ${dest}`);
+    this.getWorld().logger.info(`uploaded ${path}`);
   }
 }
 

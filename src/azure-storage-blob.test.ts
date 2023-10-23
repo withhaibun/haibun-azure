@@ -1,4 +1,4 @@
-import AzureStorageBlob from "./azure-storage-blob.js";
+import AzureStorageBlob from './azure-storage-blob.js';
 import { getTestWorldWithOptions } from '@haibun/core/build/lib/test/lib.js';
 import { getStepperOptionName } from "@haibun/core/build/lib/util/index.js";
 import { DEFAULT_DEST } from "@haibun/core/build/lib/defs.js";
