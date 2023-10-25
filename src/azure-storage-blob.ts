@@ -76,7 +76,6 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
     return ifiles.map(f => f.name);
   }
   async readdirStat(dir: string): Promise<IFile[]> {
-    let i = 0;
     let files: IFile[] = [];
     for await (const blob of (await this.getContainerClient()).listBlobsFlat()) {
       const ifile = {
