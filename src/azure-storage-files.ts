@@ -8,6 +8,9 @@ import { getStepperOption } from '@haibun/core/build/lib/util';
 import { IFile } from '@haibun/domain-storage/build/domain-storage.js';
 
 class AzureStorageFileShare extends AzureStorage {
+  rm(path: string) {
+    throw new Error('Method not implemented.');
+  }
   readdirStat(dir: string): Promise<IFile[]> {
     throw new Error('Method not implemented.');
   }

@@ -6,13 +6,16 @@ import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
 
 
-import { guessMediaType, ICreateStorageDestination, TMediaType, EMediaTypes, IFile, IGetPublishedReviews, TPathedOrString, actualPath, isPathed } from "@haibun/domain-storage/build/domain-storage.js";
+import { guessMediaType, ICreateStorageDestination, TMediaType, IFile, IGetPublishedReviews, TPathedOrString, actualPath, isPathed } from "@haibun/domain-storage/build/domain-storage.js";
 import { Timer } from '@haibun/core/build/lib/Timer.js';
 
 let resolvedEndpoint = '';
 
 export const DEFAULT_SETTING = '';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IGetPublishedReviews {
+  rm(path: string) {
+    throw new Error('Method not implemented.');
+  }
 
   // return a resolved version of getPublishedReviews with static endpoint
   public endpoint = (path: string) => `https://${this.account}.blob.core.windows.net/${path}/`;
@@ -82,7 +85,8 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
         name: blob.name,
         created: blob.properties.createdOn?.getDate()!,
         isDirectory: false,
-        isFile: true
+        isFile: true,
+        size: blob.properties.contentLength!
       }
       files.push(ifile);
     }
