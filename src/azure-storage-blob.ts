@@ -4,12 +4,10 @@ import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "
 import { AzureStorage, STRICT_PATH } from './azure-storage.js';
 import { AStepper, CAPTURE, TWorld } from '@haibun/core/build/lib/defs.js';
 import { getStepperOption } from '@haibun/core/build/lib/util/index.js';
-
-
 import { guessMediaType, ICreateStorageDestination, TMediaType, IFile, IGetPublishedReviews, TPathedOrString, actualPath, isPathed } from "@haibun/domain-storage/build/domain-storage.js";
 import { Timer } from '@haibun/core/build/lib/Timer.js';
 
-let resolvedEndpoint = '';
+let endpoint = '';
 
 export const DEFAULT_SETTING = '';
 class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination, IGetPublishedReviews {
@@ -21,7 +19,7 @@ class AzureStorageBlob extends AzureStorage implements ICreateStorageDestination
   public endpoint = (path: string) => `https://${this.account}.blob.core.windows.net/${path}/`;
 
   public async getPublishedReviews() {
-    const xml = await (await fetch(`${resolvedEndpoint}?restype=container&comp=list`)).text().catch(e => {
+    const xml = await (await fetch(`${endpoint}?restype=container&comp=list`)).text().catch(e => {
       console.error(this.constructor.name, 'indexer failed', e);
       throw (e);
     });
