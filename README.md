@@ -67,7 +67,7 @@ The pipeline uses this script from package.json:
 
   This will run the end to end test, then generate an interactive review, which can be found in the file or container storage objects.
 
-The following is the equivilent for local reviews;
+The following is the equivalent for local reviews;
 `    "publish-local-captures-indexes": "HAIBUN_O_OUTREVIEWS_TRACE_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_PUBLISH_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_INDEX_STORAGE=StorageFS HAIBUN_O_OUTREVIEWS_REVIEWS_STORAGE=StorageFS haibun-cli --config publish/local publish",`
 
 ## Strategies
